@@ -9,10 +9,8 @@ from collections import deque
 from helper.shared_utils import build_reference_data,find_best_match_in_frame
 import config
 
-def run_extension_no_ai_final_clean():
+def staff_tracking():
     """执行基于模板匹配和双重验证的轨迹补全"""
-    
-
     
     MAX_TEMPLATE_SIZE = 15
     RESIZE_DIM = (64, 128)
@@ -107,4 +105,4 @@ def run_extension_no_ai_final_clean():
     print(f"\nExtension (No AI) complete. Final staff history saved to '{config.STAFF_ID_PATH}'")
 
 if __name__ == "__main__":
-    run_extension_no_ai_final_clean()
+    staff_tracking()

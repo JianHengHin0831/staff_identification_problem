@@ -6,7 +6,7 @@ import torch
 import cv2 
 import config
 
-def run_identification_with_custom_detector():
+def staff_identification():
     # --- 1. 配置 ---
     DETECTOR_WEIGHTS_PATH = "runs/detect/staff_tag_detector/weights/best.pt"
     DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -105,4 +105,4 @@ def run_identification_with_custom_detector():
 
 
 if __name__ == "__main__":
-    run_identification_with_custom_detector()
+    staff_identification()

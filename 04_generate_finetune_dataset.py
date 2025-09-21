@@ -56,7 +56,7 @@ def augment_and_resize_tag(tag_rgba_image, target_width):
     
     return final_bgr, final_alpha
 
-def run_synthesis_final_balanced():
+def generate_finetune_dataset():
     # --- 1. 配置 ---
     
     NUM_POSITIVE_SAMPLES_PER_BG = 3
@@ -153,4 +153,4 @@ def run_synthesis_final_balanced():
     print("\nBalanced synthetic dataset for YOLO generation complete!")
 
 if __name__ == "__main__":
-    run_synthesis_final_balanced()
+    generate_finetune_dataset()

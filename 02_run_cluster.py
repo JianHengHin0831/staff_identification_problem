@@ -12,7 +12,7 @@ from helper.shared_utils import get_feature_extractor, get_preprocess_transform
 import config
 from helper.cluster import merge_tracks, build_gallery, get_track_time_intervals, calculate_spatiotemporal_score
 
-def run_clustering_spatiotemporal():
+def run_clustering():
     """
     第二阶段：执行时空感知的轨迹聚类。
     """
@@ -143,4 +143,4 @@ def run_clustering_spatiotemporal():
 
 
 if __name__ == "__main__":
-    run_clustering_spatiotemporal()
+    run_clustering()
