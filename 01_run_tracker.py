@@ -31,7 +31,7 @@ def run_tracker():
     print("Initializing BYTETracker...")
     # 初始化ByteTrack追踪器
     tracker = ByteTrack(
-        track_thresh=0.25,     # 过滤掉低于此置信度的检测框（ByteTrack的第一阶段）
+        track_thresh=0.1,     # 过滤掉低于此置信度的检测框（ByteTrack的第一阶段）
         track_buffer=50,       # 轨迹可以“失踪”的最大帧数
         match_thresh=0.8,      # IOU匹配阈值
         frame_rate=30          # 视频帧率
@@ -78,7 +78,7 @@ def run_tracker():
             online_targets = tracker.update(detections_np, frame)
 
             for target in online_targets:
-                x1, y1, x2, y2, track_id, score, cls = target
+                x1, y1, x2, y2, track_id, score, cls, _ = target
                 original_track_id = int(track_id)
                 
                 if original_track_id not in tracker_id_to_folder_id:

@@ -35,6 +35,7 @@ STAFF_ID_PATH = OUTPUT_DIR +"staff_history.json"
 TRACKER_VID = TESTING + "01_tracker.mp4"
 CLUSTER_VID = TESTING + "02_cluster.mp4"
 MANUAL_VID = TESTING + "03_manual.mp4"
+TRACKING_VID = TESTING + "07_tracking.mp4"
 
 
 

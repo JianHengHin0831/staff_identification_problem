@@ -35,7 +35,7 @@ def run_apply_manual_merge():
         merge_log = json.load(f)
     
     manual_rules = {                
-        "track_00363": ["track_00827","track_00858", "track_01176"]      
+        "track_00363": ["track_00827", "track_00858","track_01176"]      
     }
     
     print("\n" + "="*50)

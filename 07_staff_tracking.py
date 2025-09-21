@@ -8,6 +8,7 @@ import json
 from collections import deque
 from helper.shared_utils import build_reference_data,find_best_match_in_frame
 import config
+from helper.create_annotated_video import create_annotated_video
 
 def staff_tracking():
     """执行基于模板匹配和双重验证的轨迹补全"""
@@ -20,10 +21,15 @@ def staff_tracking():
     with open(config.FINAL_ROI_LOG, 'r') as f: refined_merge_log = json.load(f)
     with open(config.HISTORY_JSON_PATH, 'r') as f: all_tracks_data = json.load(f)
 
-    staff_full_data = {
+    with open(config.STAFF_LIST_PATH, "r") as f:
+        staff_list = json.load(f)["staff_ids"]
+
+    full_data = {
         final_id: {int(k): v for original_id in original_ids for k, v in all_tracks_data.get(original_id, {}).items()}
         for final_id, original_ids in refined_merge_log.items()
     }
+
+    staff_full_data = {fid: data for fid, data in full_data.items() if fid in staff_list}
     
     extended_staff_data = staff_full_data.copy()
     cap = cv2.VideoCapture(config.VIDEO_PATH)
@@ -103,6 +109,11 @@ def staff_tracking():
     with open(config.STAFF_ID_PATH, 'w') as f:
         json.dump(final_data_to_save, f, indent=4)
     print(f"\nExtension (No AI) complete. Final staff history saved to '{config.STAFF_ID_PATH}'")
+
+    create_annotated_video(
+        tracks_history_path=config.STAFF_ID_PATH,
+        output_video_path=config.TRACKING_VID
+    )
 
 if __name__ == "__main__":
     staff_tracking()
