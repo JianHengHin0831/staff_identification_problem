@@ -28,10 +28,16 @@ DISTRACTOR_TEMPLATE_PATH = "staff_tag/distractor_template.png" #noise data
 # identification
 STAFF_LIST_PATH = "staff_list.json"
 
+# staff extend
+STAFF_ID_PATH = "staff_history_extended_no_ai.json"
+
 # visualization
 TRACKER_VID = TESTING + "01_tracker.mp4"
 CLUSTER_VID = TESTING + "02_cluster.mp4"
 MANUAL_VID = TESTING + "03_manual.mp4"
+
+
+
 
 
 

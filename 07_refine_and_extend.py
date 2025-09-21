@@ -7,23 +7,20 @@ import cv2
 import json
 from collections import deque
 from helper.shared_utils import build_reference_data,find_best_match_in_frame
+import config
 
 def run_extension_no_ai_final_clean():
     """执行基于模板匹配和双重验证的轨迹补全"""
-    # --- 配置 ---
-    REFINED_ROI_DIR = "tracked_rois_refined"
-    TRACKS_HISTORY_PATH = "tracks_history.json"
-    MERGE_LOG_PATH = "merge_log_refined.json"
-    VIDEO_PATH = "sample.mp4"
-    EXTENDED_STAFF_HISTORY_PATH = "staff_history_extended_no_ai.json"
+    
+
     
     MAX_TEMPLATE_SIZE = 15
     RESIZE_DIM = (64, 128)
 
     # --- 加载数据 ---
     print("--- Loading data for final extension ---")
-    with open(MERGE_LOG_PATH, 'r') as f: refined_merge_log = json.load(f)
-    with open(TRACKS_HISTORY_PATH, 'r') as f: all_tracks_data = json.load(f)
+    with open(config.FINAL_ROI_LOG, 'r') as f: refined_merge_log = json.load(f)
+    with open(config.HISTORY_JSON_PATH, 'r') as f: all_tracks_data = json.load(f)
 
     staff_full_data = {
         final_id: {int(k): v for original_id in original_ids for k, v in all_tracks_data.get(original_id, {}).items()}
@@ -31,13 +28,13 @@ def run_extension_no_ai_final_clean():
     }
     
     extended_staff_data = staff_full_data.copy()
-    cap = cv2.VideoCapture(VIDEO_PATH)
+    cap = cv2.VideoCapture(config.VIDEO_PATH)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     for staff_id, track_data in staff_full_data.items():
         print(f"\nExtending track for staff ID: {staff_id}")
         
-        roi_folder = os.path.join(REFINED_ROI_DIR, staff_id)
+        roi_folder = os.path.join(config.FINAL_ROI_DIR, staff_id)
         initial_templates, ref_histogram = build_reference_data(roi_folder, num_templates=MAX_TEMPLATE_SIZE, resize_dim=RESIZE_DIM)
         if not initial_templates or ref_histogram is None:
             print(f"Warning: Could not build reference data for {staff_id}. Skipping.")
@@ -105,9 +102,9 @@ def run_extension_no_ai_final_clean():
     
     # --- 5. 保存最终产物 ---
     final_data_to_save = {tid: {str(k): v for k, v in sorted(data.items())} for tid, data in extended_staff_data.items()}
-    with open(EXTENDED_STAFF_HISTORY_PATH, 'w') as f:
+    with open(config.STAFF_ID_PATH, 'w') as f:
         json.dump(final_data_to_save, f, indent=4)
-    print(f"\nExtension (No AI) complete. Final staff history saved to '{EXTENDED_STAFF_HISTORY_PATH}'")
+    print(f"\nExtension (No AI) complete. Final staff history saved to '{config.STAFF_ID_PATH}'")
 
 if __name__ == "__main__":
     run_extension_no_ai_final_clean()
