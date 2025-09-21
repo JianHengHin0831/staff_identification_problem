@@ -1,28 +1,19 @@
-# run_tracker.py (Final & Cleanest version: SAHI + boxmot.BYTETracker)
-
 import cv2
 import torch
-import time
 import os
 import shutil
 import json
 from tqdm import tqdm
 import numpy as np
-from pathlib import Path
 
 from helper.shared_utils import create_debug_video
 from sahi import AutoDetectionModel
 from sahi.predict import get_sliced_prediction
-
-# 【核心】导入独立的ByteTrack
 from boxmot.trackers.bytetrack.bytetrack import ByteTrack
+import config
 
-def run_tracking_sahi_bytetrack():
-    """
-    终极版：使用SAHI进行检测，使用独立的ByteTrack库进行追踪。
-    """
+def run_tracker():
     # --- 1. 配置 ---
-    VIDEO_PATH = "sample.mp4"
     OUTPUT_ROI_DIR = "tracked_rois_initial"
     OUTPUT_JSON_PATH = "tracks_history.json"
     DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -52,7 +43,7 @@ def run_tracking_sahi_bytetrack():
     if os.path.exists(OUTPUT_ROI_DIR): shutil.rmtree(OUTPUT_ROI_DIR)
     os.makedirs(OUTPUT_ROI_DIR)
 
-    cap = cv2.VideoCapture(VIDEO_PATH)
+    cap = cv2.VideoCapture(config.VIDEO_PATH)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     
     # --- 4. 主处理循环 ---
@@ -120,10 +111,9 @@ def run_tracking_sahi_bytetrack():
     print(f"Tracks history saved to '{OUTPUT_JSON_PATH}'.")
 
     create_debug_video(
-        original_video_path=VIDEO_PATH,
         tracks_history_path=OUTPUT_JSON_PATH,
-        output_video_path="debug_tracker_output_sahi_bytetrack.mp4"
+        output_video_path=config.TRACKER_VID
     )
 
 if __name__ == "__main__":
-    run_tracking_sahi_bytetrack()
+    run_tracker()

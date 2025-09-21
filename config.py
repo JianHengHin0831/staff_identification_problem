@@ -1,4 +1,11 @@
-VIDEO_PATH = "sample.mp4"
+# Dir
+DATASET_DIR = "dataset/"
+HELPER_DIR="helper/"
+OUTPUT_DIR="output/"
+TESTING="testing/"
+FINAL_OUTPUT="final_output/"
+
+VIDEO_PATH = DATASET_DIR + "sample.mp4"
 HISTORY_JSON_PATH = "tracks_history.json" #OUTPUT_JSON_PATH
 
 # manualy merge dataset
@@ -16,4 +23,8 @@ DISTRACTOR_TEMPLATE_PATH = "staff_tag/distractor_template.png" #noise data
 
 # identification
 STAFF_LIST_PATH = "staff_list.json"
+
+# visualization
+TRACKER_VID = TESTING + "tracker.mp4"
+
 
