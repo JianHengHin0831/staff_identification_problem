@@ -35,100 +35,91 @@ def extract_features(extractor, preprocessor, image_bgr, device):
         features = extractor(preprocessed_img)
     return torch.nn.functional.normalize(features, p=2, dim=1)
 
-def create_debug_video(original_video_path, tracks_history_path, output_video_path="debug_tracker_output.mp4", merge_log=None):
-    """
-    创建一个调试视频，将所有被追踪到的轨迹都用不同颜色框起来。
-    """
-    print("\n--- Starting Debug Video Generation ---")
+# --- 1. 辅助函数 ---
+
+def calculate_histogram(image_bgr, bins=[8, 8, 8]):
+    """计算BGR图像的3D颜色直方图并归一化"""
+    if image_bgr is None or image_bgr.size == 0: return None
+    hist = cv2.calcHist([image_bgr], [0, 1, 2], None, bins, [0, 256, 0, 256, 0, 256])
+    cv2.normalize(hist, hist, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+    return hist
+
+def build_reference_data(roi_folder, num_templates=10, resize_dim=(64, 128)):
+    """从一个ROI文件夹中创建模板库和平均颜色直方图指纹"""
+    templates = []
+    hists = []
+    image_files = []
+    for root, _, files in os.walk(roi_folder):
+        for file in files:
+            if file.endswith('.jpg'):
+                image_files.append(os.path.join(root, file))
     
-    # --- 1. 验证输入文件 ---
-    if not os.path.exists(original_video_path) or not os.path.exists(tracks_history_path):
-        print(f"Error: Missing required files for debug video generation.")
-        print(f"Check for: '{original_video_path}' and '{tracks_history_path}'")
-        return
+    if not image_files: return [], None
 
-    # --- 2. 加载数据 ---
-    print(f"Loading track history from '{tracks_history_path}'...")
-    with open(tracks_history_path, 'r') as f:
-        all_tracks_data = json.load(f)
+    sample_size = min(len(image_files), num_templates)
+    sample_files = np.random.choice(image_files, sample_size, replace=False)
 
-    cap = cv2.VideoCapture(original_video_path)
-    if not cap.isOpened():
-        print(f"Error: Could not open video file '{original_video_path}'")
-        return
-
-    # --- 3. 视频读写器初始化 ---
-    frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
-    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(output_video_path, fourcc, fps, (frame_width, frame_height))
-
-    # --- 4. 颜色生成 ---
-    # 为每个 track_id 生成一个独特的、固定的颜色
-    colors = {}
-    if merge_log:
-        print(merge_log)
-        # a) 如果有合并日志，基于最终的聚类ID生成颜色
-        final_cluster_ids = list(merge_log.keys())
-        cluster_colors = {}
-        for final_id in final_cluster_ids:
-            # 用最终ID生成固定颜色
-            np.random.seed(hash(final_id) & 0xFFFFFFFF)
-            cluster_colors[final_id] = tuple(np.random.randint(50, 256, 3).tolist())
-        
-        # b) 创建一个从“原始ID”到“最终颜色”的映射 
-
-        for final_id, original_ids in merge_log.items():
-            for original_id in original_ids:
-                colors[original_id] = cluster_colors[final_id]
-      
-    else:
-        print("No merge log provided. Assigning unique colors to each initial track.")
-        # 如果没有合并日志（比如在run_tracker.py中调用），则使用旧逻辑
-        track_ids = list(all_tracks_data.keys())
-        for tid in track_ids:
-            np.random.seed(hash(tid) & 0xFFFFFFFF)
-            colors[tid] = tuple(np.random.randint(50, 256, 3).tolist())
-            #   except ValueError:
-            #     # 如果ID不是数字，使用哈希
-            #     np.random.seed(hash(tid) & 0xFFFFFFFF)
-            #     colors[tid] = tuple(np.random.randint(50, 256, 3).tolist())
-
-    # --- 5. 逐帧处理和绘制 ---
-    print(f"Processing frames to create debug video: {output_video_path}")
-    frame_idx = 0
-    with tqdm(total=int(cap.get(cv2.CAP_PROP_FRAME_COUNT)), desc="Creating debug video") as pbar:
-        while True:
-            ret, frame = cap.read()
-            if not ret: break
-
-            cv2.putText(frame, f"Frame: {frame_idx}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
-
-            # 遍历的是原始的、未聚类的轨迹数据
-            for original_track_id, track_data in all_tracks_data.items():
-                if str(frame_idx) in track_data:
-                    bbox = track_data[str(frame_idx)]
-                    x1, y1, x2, y2 = bbox
-                    
-                    # 使用我们创建的颜色映射来获取颜色
-                    
-                    color = colors.get(original_track_id, (255, 0, 0)) # 默认为红色
-                    
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-                    
-                    display_id = original_track_id.replace("track_", "ID ")
-                    cv2.putText(frame, display_id, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+    for img_path in sample_files:
+        img = cv2.imread(img_path)
+        if img is not None:
+            hists.append(calculate_histogram(img))
+            template_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            templates.append(cv2.resize(template_gray, resize_dim))
             
-            out.write(frame)
-            frame_idx += 1
-            pbar.update(1)
-
-    # --- 6. 释放资源 ---
-    cap.release()
-    out.release()
-    cv2.destroyAllWindows()
+    if not hists: return templates, None
     
-    print(f"\nDebug video generation complete!")
-    print(f"Output saved to: '{output_video_path}'")
+    valid_hists = [h for h in hists if h is not None]
+    if not valid_hists: return templates, None
+    
+    return templates, np.mean(valid_hists, axis=0)
+
+def find_best_match_in_frame(frame, templates, ref_histogram, prev_bbox, 
+                             search_radius=200, match_threshold=0.6, hist_threshold=0.5):
+    """带颜色直方图双重验证的、多尺度的模板匹配"""
+    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    
+    px, py = (prev_bbox[0] + prev_bbox[2]) // 2, (prev_bbox[1] + prev_bbox[3]) // 2
+    x_min = max(0, px - search_radius); y_min = max(0, py - search_radius)
+    x_max = min(frame.shape[1], px + search_radius); y_max = min(frame.shape[0], py + search_radius)
+    
+    search_area_gray = frame_gray[y_min:y_max, x_min:x_max]
+    # 【KEPT & EXPLAINED】我们保留这个变量，用于后续高效的颜色ROI裁剪
+    search_area_color = frame[y_min:y_max, x_min:x_max]
+
+    if search_area_gray.size == 0: return None
+    
+    best_overall_score = -1
+    final_best_bbox = None
+
+    for template in templates:
+        for scale in np.linspace(0.8, 1.2, 5):
+            resized_template = cv2.resize(template, (0, 0), fx=scale, fy=scale)
+            th, tw = resized_template.shape
+            
+            if th > search_area_gray.shape[0] or tw > search_area_gray.shape[1]: continue
+
+            res = cv2.matchTemplate(search_area_gray, resized_template, cv2.TM_CCOEFF_NORMED)
+            _, max_val, _, max_loc = cv2.minMaxLoc(res)
+
+            if max_val > match_threshold:
+                top_left_local = max_loc
+                
+                # 【核心修正】现在我们正确地从更小的 `search_area_color` 中裁剪
+                candidate_roi_color = search_area_color[
+                    top_left_local[1] : top_left_local[1] + th,
+                    top_left_local[0] : top_left_local[0] + tw
+                ]
+
+                if candidate_roi_color.size > 0:
+                    candidate_hist = calculate_histogram(candidate_roi_color)
+                    if candidate_hist is None: continue
+                    hist_similarity = cv2.compareHist(ref_histogram, candidate_hist, cv2.HISTCMP_CORREL)
+
+                    if hist_similarity >= hist_threshold:
+                        if max_val > best_overall_score:
+                            best_overall_score = max_val
+                            final_best_bbox = [
+                                top_left_local[0] + x_min, top_left_local[1] + y_min,
+                                top_left_local[0] + x_min + tw, top_left_local[1] + y_min + th
+                            ]
+    return final_best_bbox

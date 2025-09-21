@@ -52,9 +52,9 @@ def train_detector():
         epochs=EPOCHS,
         imgsz=IMG_SIZE,
         batch=BATCH_SIZE,
-        name=PROJECT_NAME, # 结果将保存在 runs/detect/staff_tag_detector
+        name=PROJECT_NAME,
         project="runs/detect",
-        exist_ok=True # 如果文件夹已存在，则覆盖
+        exist_ok=True 
     )
     
     print("\nFine-tuning complete!")

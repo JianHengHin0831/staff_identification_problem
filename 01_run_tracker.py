@@ -4,9 +4,9 @@ import os
 import shutil
 import json
 from tqdm import tqdm
-import numpy as np
+import numpy as np 
 
-from helper.shared_utils import create_debug_video
+from helper.create_annotated_video import create_annotated_video
 from sahi import AutoDetectionModel
 from sahi.predict import get_sliced_prediction
 from boxmot.trackers.bytetrack.bytetrack import ByteTrack
@@ -14,8 +14,6 @@ import config
 
 def run_tracker():
     # --- 1. 配置 ---
-    OUTPUT_ROI_DIR = "tracked_rois_initial"
-    OUTPUT_JSON_PATH = "tracks_history.json"
     DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
     YOLO_MODEL_PATH = 'yolov8l.pt'
 
@@ -40,8 +38,8 @@ def run_tracker():
     )
 
     # --- 3. 准备目录和视频读取器 ---
-    if os.path.exists(OUTPUT_ROI_DIR): shutil.rmtree(OUTPUT_ROI_DIR)
-    os.makedirs(OUTPUT_ROI_DIR)
+    if os.path.exists(config.TRACKER_ROI_DIR): shutil.rmtree(config.TRACKER_ROI_DIR)
+    os.makedirs(config.TRACKER_ROI_DIR)
 
     cap = cv2.VideoCapture(config.VIDEO_PATH)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -96,7 +94,7 @@ def run_tracker():
 
                 roi = frame[max(0, bbox[1]):min(frame.shape[0], bbox[3]), max(0, bbox[0]):min(frame.shape[1], bbox[2])]
                 if roi.size > 0:
-                    track_dir = os.path.join(OUTPUT_ROI_DIR, str(folder_id))
+                    track_dir = os.path.join(config.TRACKER_ROI_DIR, str(folder_id))
                     os.makedirs(track_dir, exist_ok=True)
                     cv2.imwrite(os.path.join(track_dir, f"frame_{str(frame_idx).zfill(5)}.jpg"), roi)
 
@@ -106,12 +104,12 @@ def run_tracker():
     cap.release()
     print("\nProcessing finished.")
     
-    with open(OUTPUT_JSON_PATH, 'w') as f:
+    with open(config.HISTORY_JSON_PATH, 'w') as f:
         json.dump(all_tracks_data, f, indent=4)
-    print(f"Tracks history saved to '{OUTPUT_JSON_PATH}'.")
+    print(f"Tracks history saved to '{config.HISTORY_JSON_PATH}'.")
 
-    create_debug_video(
-        tracks_history_path=OUTPUT_JSON_PATH,
+    create_annotated_video(
+        tracks_history_path=config.HISTORY_JSON_PATH,
         output_video_path=config.TRACKER_VID
     )
 

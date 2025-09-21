@@ -3,9 +3,7 @@
 import os
 import shutil
 import torch
-import numpy as np
 from tqdm import tqdm
-import cv2
 import json
 from helper.create_annotated_video import create_annotated_video
 
@@ -18,36 +16,30 @@ def run_clustering_spatiotemporal():
     """
     第二阶段：执行时空感知的轨迹聚类。
     """
-    TRACKS_HISTORY_PATH='tracks_history.json'
 
-    with open(TRACKS_HISTORY_PATH, 'r') as f:
+    with open(config.HISTORY_JSON_PATH, 'r') as f:
         tracks_history = json.load(f)
 
     # --- 1. 配置 ---
-    INITIAL_ROI_DIR = "tracked_rois_initial"
-    FINAL_ROI_DIR = "tracked_rois_final"
     MERGE_SCORE_THRESHOLD = 0.75 # 【关键参数】现在是基于最终分数的阈值
     MIN_TRACK_LENGTH = 10
     DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
-    VIDEO_PATH = "sample.mp4"
-    OUTPUT_JSON_PATH = "tracks_history.json"
 
-    if os.path.exists(FINAL_ROI_DIR): shutil.rmtree(FINAL_ROI_DIR)
-    shutil.copytree(INITIAL_ROI_DIR, FINAL_ROI_DIR)
-    OUTPUT_LOG_PATH = "testing/merge_log.json"
+    if os.path.exists(config.MERGED_ROI_DIR): shutil.rmtree(config.MERGED_ROI_DIR)
+    shutil.copytree(config.TRACKER_ROI_DIR, config.MERGED_ROI_DIR)
 
     # --- 2. 加载模型 & 构建初始数据 ---
     extractor = get_feature_extractor(DEVICE)
     preprocessor = get_preprocess_transform()
     
-    track_ids = [d for d in os.listdir(FINAL_ROI_DIR) if os.path.isdir(os.path.join(FINAL_ROI_DIR, d))]
+    track_ids = [d for d in os.listdir(config.MERGED_ROI_DIR) if os.path.isdir(os.path.join(config.MERGED_ROI_DIR, d))]
     
     galleries = {}
     track_time_intervals = {} 
 
     for tid in tqdm(track_ids):
-        galleries[tid] = build_gallery(FINAL_ROI_DIR, tid, extractor, preprocessor, DEVICE)
-        track_time_intervals[tid] = get_track_time_intervals(FINAL_ROI_DIR, tid)
+        galleries[tid] = build_gallery(config.MERGED_ROI_DIR, tid, extractor, preprocessor, DEVICE)
+        track_time_intervals[tid] = get_track_time_intervals(config.MERGED_ROI_DIR, tid)
     
 
     # 移除无效轨迹
@@ -76,7 +68,7 @@ def run_clustering_spatiotemporal():
                     continue
 
                 score, reason = calculate_spatiotemporal_score(
-                    FINAL_ROI_DIR, id1, id2,
+                    config.MERGED_ROI_DIR, id1, id2,
                     galleries[id1], galleries[id2],
                     track_time_intervals[id1], track_time_intervals[id2],
                     tracks_history,
@@ -89,7 +81,7 @@ def run_clustering_spatiotemporal():
                     # 合并逻辑保持不变，但更新数据结构时有变化
                     dest_id, source_id = (id1, id2) if track_time_intervals[id1][0][0] < track_time_intervals[id2][0][0] else (id2, id1)
                     
-                    merge_tracks(FINAL_ROI_DIR, source_id, dest_id)
+                    merge_tracks(config.MERGED_ROI_DIR, source_id, dest_id)
 
                     merge_log[dest_id].update(merge_log[source_id])
                     del merge_log[source_id] # 从日志中删除旧的key
@@ -100,7 +92,7 @@ def run_clustering_spatiotemporal():
                     # 也可以在这里添加一个合并相邻区间的逻辑，但非必须
                     
                     # 更新画廊
-                    galleries[dest_id] = build_gallery(FINAL_ROI_DIR, dest_id, extractor, preprocessor, DEVICE)
+                    galleries[dest_id] = build_gallery(config.MERGED_ROI_DIR, dest_id, extractor, preprocessor, DEVICE)
                     
                     ids_to_delete.add(source_id)
                     merged_in_this_pass = True
@@ -117,35 +109,33 @@ def run_clustering_spatiotemporal():
     
     # --- 5. 最终清理 ---
     print("\nClustering and merging complete. Cleaning up short tracks...")
-    final_track_ids = os.listdir(FINAL_ROI_DIR)
+    final_track_ids = os.listdir(config.MERGED_ROI_DIR)
     deleted_count = 0
     for tid in final_track_ids:
-        track_path = os.path.join(FINAL_ROI_DIR, tid)
+        track_path = os.path.join(config.MERGED_ROI_DIR, tid)
         if len(os.listdir(track_path)) < MIN_TRACK_LENGTH:
             shutil.rmtree(track_path)
             deleted_count += 1
             
     print(f"Deleted {deleted_count} tracks with fewer than {MIN_TRACK_LENGTH} frames.")
-    print(f"\nFinal number of unique people identified: {len(os.listdir(FINAL_ROI_DIR))}")
+    print(f"\nFinal number of unique people identified: {len(os.listdir(config.MERGED_ROI_DIR))}")
 
-    final_track_ids = os.listdir(FINAL_ROI_DIR)
+    final_track_ids = os.listdir(config.MERGED_ROI_DIR)
     print(f"\nFinal clusters are: {final_track_ids}")
 
     # --- 【新增】保存最终结果到JSON ---
     final_merge_log = {k: sorted(list(v)) for k, v in merge_log.items()}
 
-    print(f"\nSaving merge log to '{OUTPUT_LOG_PATH}'...")
-    with open(OUTPUT_LOG_PATH, 'w') as f:
+    print(f"\nSaving merge log to '{config.MERGED_ROI_LOG}'...")
+    with open(config.MERGED_ROI_LOG, 'w') as f:
         json.dump(final_merge_log, f, indent=4)
     print("Clustering complete. Final ROIs are in 'tracked_rois_final'.")
-    print(f"Merge log created at '{OUTPUT_LOG_PATH}'.")
+    print(f"Merge log created at '{config.MERGED_ROI_LOG}'.")
 
 
 
     create_annotated_video(
-        original_video_path=VIDEO_PATH,
-        tracks_history_path=OUTPUT_JSON_PATH,
-        output_video_path="testing/run_cluster.mp4",
+        output_video_path=config.CLUSTER_VID,
         merge_log=final_merge_log,
         interpolate=False 
     )

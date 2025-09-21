@@ -6,14 +6,18 @@ TESTING="testing/"
 FINAL_OUTPUT="final_output/"
 
 VIDEO_PATH = DATASET_DIR + "sample.mp4"
-HISTORY_JSON_PATH = "tracks_history.json" #OUTPUT_JSON_PATH
+
+# tracker config
+HISTORY_JSON_PATH = "tracks_history.json" 
+TRACKER_ROI_DIR = "tracked_rois_initial"
+
+# cluster config
+MERGED_ROI_DIR = "tracked_rois_final"
+MERGED_ROI_LOG = OUTPUT_DIR + "merge_log.json"
 
 # manualy merge dataset
-MERGED_ROI_DIR = "tracked_rois_final" #INPUT_ROI_DIR 
-MERGED_ROI_LOG = "testing/merge_log.json" #INPUT_MERGE_LOG
-
 FINAL_ROI_DIR = "tracked_rois_manual_final"
-FINAL_ROI_LOG = "merge_log_manual.json"
+FINAL_ROI_LOG = OUTPUT_DIR + "merge_log_manual.json"
 
 # dataset used to be finetune staff tag detector
 EXTERNAL_IMAGES_DIR = "external_person_images/" #dataset used to be create dataset (P-DESTRE)
@@ -25,6 +29,9 @@ DISTRACTOR_TEMPLATE_PATH = "staff_tag/distractor_template.png" #noise data
 STAFF_LIST_PATH = "staff_list.json"
 
 # visualization
-TRACKER_VID = TESTING + "tracker.mp4"
+TRACKER_VID = TESTING + "01_tracker.mp4"
+CLUSTER_VID = TESTING + "02_cluster.mp4"
+MANUAL_VID = TESTING + "03_manual.mp4"
+
 
 

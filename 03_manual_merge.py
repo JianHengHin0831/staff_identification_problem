@@ -6,7 +6,6 @@ import json
 from helper.create_annotated_video import create_annotated_video
 import config
 
-
 def merge_folders(source_folder, dest_folder):
     """将一个文件夹的内容移动到另一个文件夹，然后删除源文件夹"""
     if not os.path.exists(dest_folder) or not os.path.exists(source_folder):
@@ -21,7 +20,6 @@ def run_apply_manual_merge():
     """
     读取配置文件，执行手动合并，并生成所有最终产物。
     """
-    OUTPUT_VIDEO_PATH = "output_manual_merge.mp4"
     # --- 2. 验证和准备数据 ---
     required = [config.MERGED_ROI_DIR, config.MERGED_ROI_LOG]
     if not all(os.path.exists(f) for f in required):
@@ -71,7 +69,7 @@ def run_apply_manual_merge():
     print("\nGenerating the final annotated video based on manual merges...")
     
     create_annotated_video(
-        output_video_path=OUTPUT_VIDEO_PATH,
+        output_video_path=config.MANUAL_VID,
         merge_log=merge_log,
         interpolate=False 
     )
