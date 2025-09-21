@@ -33,7 +33,7 @@ def run_tracker():
     tracker = ByteTrack(
         track_thresh=0.1,     # 过滤掉低于此置信度的检测框（ByteTrack的第一阶段）
         track_buffer=50,       # 轨迹可以“失踪”的最大帧数
-        match_thresh=0.8,      # IOU匹配阈值
+        match_thresh=0.9,      # IOU匹配阈值
         frame_rate=30          # 视频帧率
     )
 

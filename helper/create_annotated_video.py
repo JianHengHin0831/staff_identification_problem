@@ -20,7 +20,8 @@ def create_annotated_video(
     merge_log=None,
     highlight_ids=None,
     interpolate=False,
-    max_interpolation_gap=15
+    max_interpolation_gap=15,
+    show_coordinates=False,
 ):
     """
     创建一个功能强大的、统一的标注视频生成函数。

@@ -74,7 +74,7 @@ def build_reference_data(roi_folder, num_templates=10, resize_dim=(64, 128)):
     return templates, np.mean(valid_hists, axis=0)
 
 def find_best_match_in_frame(frame, templates, ref_histogram, prev_bbox, 
-                             search_radius=200, match_threshold=0.6, hist_threshold=0.5):
+                             search_radius=20, match_threshold=0.1, hist_threshold=0.5):
     """带颜色直方图双重验证的、多尺度的模板匹配"""
     frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     
