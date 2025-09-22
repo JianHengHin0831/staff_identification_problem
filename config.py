@@ -29,13 +29,17 @@ DISTRACTOR_TEMPLATE_PATH = DATASET_DIR + "staff_tag/distractor_template.png" #no
 STAFF_LIST_PATH = OUTPUT_DIR + "staff_list.json"
 
 # staff extend
-STAFF_ID_PATH = OUTPUT_DIR +"staff_history.json"
+STAFF_ID_PATH = FINAL_OUTPUT +"staff_history.json"
+
+#final report
+REPORT_TEXT = FINAL_OUTPUT +"final_report.txt"
 
 # visualization
 TRACKER_VID = TESTING + "01_tracker.mp4"
 CLUSTER_VID = TESTING + "02_cluster.mp4"
 MANUAL_VID = TESTING + "03_manual.mp4"
 TRACKING_VID = TESTING + "07_tracking.mp4"
+REPORT_VID = FINAL_OUTPUT + "video_output.mp4"
 
 
 

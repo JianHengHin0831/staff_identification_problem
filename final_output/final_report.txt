@@ -1,0 +1,33 @@
+AI Evaluation Task Results
+============================
+
+A total of 1 staff member(s) were identified.
+Details for each staff member are listed below:
+
+--- Staff Member #1 (Internal ID: track_00363) ---
+
+Task 1: Presence by Frame Intervals
+-------------------------------------
+This staff member was present in the following frame intervals:
+  - Frames: 363 to 392
+  - Frames: 436 to 477
+  - Frames: 523 to 701
+  - Frames: 827 to 865
+  - Frames: 912 to 945
+  - Frames: 991 to 1032
+  - Frames: 1077 to 1145
+  - Frames: 1176 to 1225
+
+Task 2: XY Coordinates per Frame (Sample)
+-----------------------------------------
+A sample of the center (x, y) coordinates is shown below.
+  - Frame 363: (571, 246)
+  - Frame 364: (562, 230)
+  - Frame 365: (557, 210)
+  - Frame 366: (551, 187)
+  - Frame 367: (549, 166)
+  - ... (and more)
+
+--- Additional Information ---
+Complete XY coordinates for all identified staff are located in the JSON file: 'staff_history.json'
+A complete visualization of all identified staff tracks is available in the video file: 'video_output.mp4'

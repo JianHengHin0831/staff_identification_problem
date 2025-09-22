@@ -124,10 +124,16 @@ def create_annotated_video(
                     x1, y1, x2, y2 = map(int, bbox)
                     final_color = (0, 255, 255) if is_interpolated else color
                     text = display_id.replace("track_", "ID ")
-                    if is_interpolated: text += " (interp.)"
-                    
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), final_color, 2)
-                    cv2.putText(frame, text, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, final_color, 2)
+                    if is_interpolated: text += " (interp.)"                    
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), final_color, 2)                    
+                    if show_coordinates: 
+                        center_x = (x1+x2) // 2
+                        center_y = (y1+y2) // 2
+                        coord_Text = "( "+str(center_x) + " , "+str(center_y)+" )"
+                        cv2.putText(frame, text, (x1, y1 - 35), cv2.FONT_HERSHEY_SIMPLEX, 0.6, final_color, 2)
+                        cv2.putText(frame, coord_Text, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, final_color, 2)
+                    else:
+                        cv2.putText(frame, text, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, final_color, 2)
 
             out.write(frame)
             pbar.update(1)
