@@ -12,12 +12,10 @@ from helper.create_annotated_video import create_annotated_video
 from helper.interpolation import run_clean_and_interpolate
 
 def staff_tracking():
-    """执行基于模板匹配和双重验证的轨迹补全"""
-     
     MAX_TEMPLATE_SIZE = 15
     RESIZE_DIM = (64, 128)
 
-    # --- 加载数据 ---
+    # Loading data
     print("--- Loading data for final extension ---")
     with open(config.FINAL_ROI_LOG, 'r') as f: refined_merge_log = json.load(f)
     with open(config.HISTORY_JSON_PATH, 'r') as f: all_tracks_data = json.load(f)
@@ -82,9 +80,10 @@ def staff_tracking():
 
     cap.release()
     
-    #in between interpolation
+    # c) in between interpolation
     interpolated_staff_data = run_clean_and_interpolate(extended_staff_data.copy())
-    # --- 5. 保存最终产物 ---
+    
+    # output result
     final_data_to_save = {tid: {str(k): v for k, v in sorted(data.items())} for tid, data in interpolated_staff_data.items()}
     
     with open(config.STAFF_ID_PATH, 'w') as f:

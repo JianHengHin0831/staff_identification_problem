@@ -9,20 +9,20 @@ from tqdm import tqdm
 import config
 
 def augment_and_resize_tag(tag_rgba_image, target_width):
-    """
-    对RGBA名牌进行虚拟俯视变换和增强，并缩放到目标宽度。
-    返回一个清理过的BGR图像和一个最终的Alpha Mask。
-    """
+
+    # performs a virtual top-down transformation and augmentation on the RGBA nameplate, 
+    # scaling it to the target width.
+    # returns a cleaned BGR image and a final alpha mask. 
     if tag_rgba_image is None or tag_rgba_image.shape[2] != 4:
         raise ValueError("Input image must be a 4-channel RGBA image.")
     
-    # 分离通道
+    # split channel
     bgr_original = tag_rgba_image[:, :, :3]
     alpha_original = tag_rgba_image[:, :, 3]
     
     h, w = bgr_original.shape[:2]
     
-    # --- 1. 几何变换 (同时作用于BGR和Alpha) ---
+    # transformation on bgr and alpha
     angle = np.random.uniform(-30, 30)
     M_rot = cv2.getRotationMatrix2D((w / 2, h / 2), angle, 1.0)
     rotated_bgr = cv2.warpAffine(bgr_original, M_rot, (w, h), borderValue=(0,0,0))
@@ -39,15 +39,15 @@ def augment_and_resize_tag(tag_rgba_image, target_width):
     topview_bgr = cv2.warpPerspective(rotated_bgr, M_persp, (final_w, final_h))
     topview_alpha = cv2.warpPerspective(rotated_alpha, M_persp, (final_w, final_h))
 
-    # --- 2. 清理变换引入的边界像素 ---
+    # clean up the boundary pixels introduced by the transformation
     cleaned_bgr = cv2.bitwise_and(topview_bgr, topview_bgr, mask=topview_alpha)
     
-    # --- 3. 颜色增强 (只作用于清理后的BGR) ---
+    # colour augmentation
     alpha_jitter = np.random.uniform(0.8, 1.2)
     beta_jitter = np.random.uniform(-20, 20)
     adjusted_bgr = np.clip(alpha_jitter * cleaned_bgr + beta_jitter, 0, 255).astype(np.uint8)
 
-    # --- 4. 最终缩放 ---
+    # scaling
     aspect_ratio = final_w / max(1, final_h)
     target_height = int(target_width / aspect_ratio)
     
@@ -57,12 +57,9 @@ def augment_and_resize_tag(tag_rgba_image, target_width):
     return final_bgr, final_alpha
 
 def generate_finetune_dataset():
-    # --- 1. 配置 ---
-    
     NUM_POSITIVE_SAMPLES_PER_BG = 3
     NUM_HARD_NEGATIVE_SAMPLES_PER_BG = 2
     
-    # --- 2. 准备目录 ---
     print("Preparing dataset directories...")
     images_dir = os.path.join(config.FINETUNE_DATASET, 'images', 'train')
     labels_dir = os.path.join(config.FINETUNE_DATASET, 'labels', 'train')
@@ -70,7 +67,7 @@ def generate_finetune_dataset():
     os.makedirs(images_dir)
     os.makedirs(labels_dir)
 
-    # --- 3. 加载模板和文件列表 ---
+    # load tag template and distractor_template
     tag_template_rgba = cv2.imread(config.STAFF_TAG_TEMPLATE_PATH, cv2.IMREAD_UNCHANGED)
     distractor_template_rgba = cv2.imread(config.DISTRACTOR_TEMPLATE_PATH, cv2.IMREAD_UNCHANGED)
     if tag_template_rgba is None or distractor_template_rgba is None or \
@@ -78,6 +75,7 @@ def generate_finetune_dataset():
         print("Error: Could not load templates as RGBA. Ensure they are valid PNGs with transparency.")
         return
         
+    # load external library
     background_files = [f for f in os.listdir(config.EXTERNAL_IMAGES_DIR) if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
     if not background_files:
         print(f"Error: No background images found in '{config.EXTERNAL_IMAGES_DIR}'")
@@ -85,14 +83,14 @@ def generate_finetune_dataset():
 
     print(f"Found {len(background_files)} background images.")
     
-    # --- 4. 开始合成 ---
+    # start synthesizing
     for bg_fname in tqdm(background_files, desc="Synthesizing balanced dataset"):
         bg_path = os.path.join(config.EXTERNAL_IMAGES_DIR, bg_fname)
         background_img = cv2.imread(bg_path)
         if background_img is None: continue
         bh, bw = background_img.shape[:2]
 
-        # a) 生成正样本 (带标签)
+        # a) positive samples
         for i in range(NUM_POSITIVE_SAMPLES_PER_BG):
             target_tag_width = random.randint(bw // 8, bw // 4)
             augmented_tag_bgr, augmented_alpha_mask = augment_and_resize_tag(tag_template_rgba, target_tag_width)
@@ -123,7 +121,7 @@ def generate_finetune_dataset():
             with open(label_path, 'w') as f:
                 f.write(f"0 {x_center:.6f} {y_center:.6f} {width_norm:.6f} {height_norm:.6f}\n")
 
-        # b) 生成困难负样本 (Hard Negatives) - (不带标签)
+        # b) hard negative samples
         for i in range(NUM_HARD_NEGATIVE_SAMPLES_PER_BG):
             target_tag_width = random.randint(bw // 8, bw // 4)
             augmented_distractor_bgr, augmented_distractor_mask = augment_and_resize_tag(distractor_template_rgba, target_tag_width)
@@ -146,7 +144,7 @@ def generate_finetune_dataset():
             save_path_neg_hard = os.path.join(images_dir, f"{os.path.splitext(bg_fname)[0]}_hard_neg_{i}.jpg")
             cv2.imwrite(save_path_neg_hard, negative_img)
             
-        # c) 生成简单负样本 (Easy Negatives) - (不带标签)
+        # c) easy negative samples
         save_path_neg_easy = os.path.join(images_dir, bg_fname)
         shutil.copy(bg_path, save_path_neg_easy)
         

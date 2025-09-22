@@ -1,39 +1,24 @@
-# refine_and_extend.py (Final version with Cleaning & Interpolation)
-
-import os
-import shutil
-import torch
 import numpy as np
-from tqdm import tqdm
-import cv2
-import json
-
-# 我们不再需要任何AI模型或复杂的匹配函数
 from helper.create_annotated_video import linear_interpolate
 
+
+# 2 steps done in this function
+#1. Clean the tracks to remove short segments with sudden position changes.
+#2. Perform linear interpolation on short missing frames in the cleaned tracks.
+
 def run_clean_and_interpolate(staff_full_data):
-    """
-    最终后处理阶段：
-    1. 清洗轨迹，移除位置突变的短片段。
-    2. 对清洗后的轨迹中的小空洞进行线性插值。
-    """
+    MAX_JUMP_DISTANCE = 200 # the distance that consider as "sudden position changes"
+    MAX_FRAGMENT_LENGTH = 60 # remove the frames if sudden change and the change < MAX_FRAGMENT_LENGTH
+    MAX_INTERPOLATION_GAP = 30 # only do interpolation that lower the 1 second
 
-
-    # --- 清洗参数 ---
-    MAX_JUMP_DISTANCE = 200  # 如果两帧之间的中心点距离超过200像素，视为“瞬移”
-    MAX_FRAGMENT_LENGTH = 60 # 如果一个“瞬移”后的片段长度小于60帧，则删除它
-
-    # --- 插值参数 ---
-    MAX_INTERPOLATION_GAP = 30 # 只对小于15帧的空洞进行插值
-
-    print("\n--- Stage 2: Cleaning tracks by removing short, disjointed fragments ---")
+    # 1. Clean the tracks to remove short segments with sudden position changes.
     cleaned_staff_data = {}
     for staff_id, track_data in staff_full_data.items():
         print(f"  Cleaning track for staff ID: {staff_id}")
         
         sorted_frames = sorted(track_data.keys())
         
-        # 将轨迹按“瞬移”点分割成多个片段
+        # Split the track into multiple segments based on the "sudden changed" point
         fragments = []
         current_fragment = {}
         
@@ -45,7 +30,7 @@ def run_clean_and_interpolate(staff_full_data):
             prev_frame = sorted_frames[i-1]
             current_frame = sorted_frames[i]
             
-            # 只在连续帧之间检查跳变
+            # only check the consecutive frames
             if current_frame - prev_frame ==1:
                 prev_bbox = track_data[prev_frame]
                 current_bbox = track_data[current_frame]
@@ -54,17 +39,17 @@ def run_clean_and_interpolate(staff_full_data):
                 dist = np.linalg.norm(current_center - prev_center)
                 
                 if dist > MAX_JUMP_DISTANCE:
-                    # 发现“瞬移”，结束当前片段，开始新片段
+                    # found "teleport", ended the current segment and started a new segment
                     fragments.append(current_fragment)
                    
                     current_fragment = {}
             
             current_fragment[current_frame] = track_data[current_frame]
 
-        # 添加最后一个片段
+        # add last fragment
         fragments.append(current_fragment)
         
-        # 过滤掉过短的片段
+        # filter shorter fragments
         final_track_data = {}
         for frag in fragments:
             if len(frag) > MAX_FRAGMENT_LENGTH:
@@ -74,7 +59,7 @@ def run_clean_and_interpolate(staff_full_data):
                 
         cleaned_staff_data[staff_id] = final_track_data
 
-    # --- 4. 【核心逻辑】对清洗后的轨迹进行线性插值 ---
+    # 2. Perform linear interpolation on short missing frames in the cleaned tracks.
     print("\n--- Stage 3: Interpolating small gaps in cleaned tracks ---")
     interpolated_staff_data = cleaned_staff_data.copy()
     
@@ -102,7 +87,6 @@ def run_clean_and_interpolate(staff_full_data):
             print(f"  Interpolated and added {len(frames_to_add)} frames for staff ID {staff_id}.")
             interpolated_staff_data[staff_id].update(frames_to_add)
 
-    # --- 5. 保存最终产物 ---
     return interpolated_staff_data
 
   

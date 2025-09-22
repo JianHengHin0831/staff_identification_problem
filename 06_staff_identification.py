@@ -7,7 +7,7 @@ import cv2
 import config
 
 def staff_identification():
-    # --- 1. 配置 ---
+    # configuration
     DETECTOR_WEIGHTS_PATH = "runs/detect/staff_tag_detector/weights/best.pt"
     DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -15,7 +15,7 @@ def staff_identification():
     DECISION_THRESHOLD_RATIO = 0.10
     MIN_VOTE_COUNT = 10
 
-    # --- 2. 验证和加载模型 ---
+    # validate and load models
     if not os.path.exists(DETECTOR_WEIGHTS_PATH):
         print(f"Error: Fine-tuned model weights not found at '{DETECTOR_WEIGHTS_PATH}'")
         return
@@ -24,7 +24,6 @@ def staff_identification():
     tag_detector = YOLO(DETECTOR_WEIGHTS_PATH)
     tag_detector.to(DEVICE)
 
-    # --- 3. 遍历轨迹文件夹进行投票 ---
     print(f"\nIdentifying staff from tracks in '{config.FINAL_ROI_DIR}'...")
     if not os.path.exists(config.FINAL_ROI_DIR):
         print(f"Error: Directory not found: '{config.FINAL_ROI_DIR}'")
@@ -34,6 +33,7 @@ def staff_identification():
     
     staff_identification_results = {}
 
+    # vote for each tracks
     for tid in tqdm(track_ids, desc="Processing tracks"):
         track_path = os.path.join(config.FINAL_ROI_DIR, tid)
         
@@ -48,32 +48,24 @@ def staff_identification():
         
         vote_count = 0
         
-        # 【核心修正】逐一预测，并在调用YOLO前增加一个可靠的图像读取检查
         for img_path in image_files:
-            # --- 前置验证 ---
-            # 使用 cv2.imread 尝试读取图片
             img = cv2.imread(img_path)
-            
-            # 如果 img is None，说明图片已损坏或无法读取
+         
             if img is None:
                 print(f"\nWarning: Skipping corrupted or unreadable image: {img_path}")
-                # 从总数中减去这张坏图片
                 total_images -= 1
-                continue # 跳到下一张图片
+                continue # jump to next image
             
-            # --- 如果图片有效，才进行预测 ---
             try:
-                # 现在可以安全地把图片路径（或已读取的img对象）传给YOLO
                 results = tag_detector(img_path, conf=DETECTION_CONFIDENCE, verbose=False)
                 
                 if len(results[0].boxes) > 0:
                     vote_count += 1
             except Exception as e:
-                # 保留一个通用的异常捕捉，以防YOLO内部发生其他错误
                 print(f"\nAn unexpected error occurred while processing {img_path}: {e}")
                 total_images -= 1
 
-        # --- 4. 最终决策 ---
+        # final decision & output result
         vote_ratio = vote_count / total_images if total_images > 0 else 0
         is_staff = vote_count >= MIN_VOTE_COUNT and vote_ratio >= DECISION_THRESHOLD_RATIO
         
@@ -83,7 +75,7 @@ def staff_identification():
             "total_images": total_images,
             "vote_ratio": f"{vote_ratio:.2%}"
         }
-    # --- 5. 打印并保存最终结果 ---
+    # print results
     print("\n" + "="*50)
     print("      Final Staff Identification Results (Custom Detector)")
     print("="*50)

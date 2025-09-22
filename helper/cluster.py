@@ -12,21 +12,21 @@ def find_closest_transition_frames(roi_dir, track_id1, track_id2, intervals1, in
     id_of_best_frame1 = None
     id_of_best_frame2 = None
 
-    # 遍历所有时间段对，寻找最小的时间间隔
+    # find the shortest intervals
     for start1, end1 in intervals1:
         for start2, end2 in intervals2:
-            # 比较 end1 和 start2
+            # compare end1 and start2
             gap1 = abs(start2 - end1)
             if gap1 < min_gap:
                 min_gap = gap1
                 best_frame1, best_frame2 = end1, start2
                 id_of_best_frame1, id_of_best_frame2 = track_id1, track_id2
 
-            # 比较 end2 和 start1
+            # compare end2 and start1
             gap2 = abs(start1 - end2)
             if gap2 < min_gap:
                 min_gap = gap2
-                best_frame1, best_frame2 = end2, start1 # 注意顺序
+                best_frame1, best_frame2 = end2, start1 
                 id_of_best_frame1, id_of_best_frame2 = track_id2, track_id1
                 
     if best_frame1 == -1 or best_frame2 == -1:
@@ -35,22 +35,21 @@ def find_closest_transition_frames(roi_dir, track_id1, track_id2, intervals1, in
     path1 = os.path.join(roi_dir, id_of_best_frame1, f"frame_{str(best_frame1).zfill(5)}.jpg")
     path2 = os.path.join(roi_dir, id_of_best_frame2, f"frame_{str(best_frame2).zfill(5)}.jpg")
 
-    # 返回所有需要的信息：路径1, 路径2, 帧号1, 帧号2, 最小间隔
     return path1, path2, best_frame1, best_frame2, min_gap
 
 def get_track_time_range(roi_dir, track_id):
-    """从文件名解析轨迹的开始和结束帧"""
+    # get track time range from starting frame and ending frame
     track_path = os.path.join(roi_dir, track_id)
     image_files = [f for f in os.listdir(track_path) if f.endswith('.jpg')]
     if not image_files:
         return -1, -1
     
-    # 解析文件名中的数字
+    # get the frame numbers from dir name
     frame_numbers = [int(f.replace('frame_', '').replace('.jpg', '')) for f in image_files]
     return min(frame_numbers), max(frame_numbers)
 
 def build_gallery(roi_dir, track_id, extractor, preprocessor, device, sample_size=15):
-    """为每个轨迹构建一个特征画廊"""
+    # build a feature gallery for each track
     gallery_features = []
     track_path = os.path.join(roi_dir, track_id)
     image_files = [f for f in os.listdir(track_path) if f.endswith('.jpg')]
@@ -84,26 +83,27 @@ def get_track_time_intervals(roi_dir, track_id, max_gap=10):
     intervals = []
     start_interval = frame_numbers[0]
     for i in range(1, len(frame_numbers)):
-        # 如果当前帧号与上一帧号的间隔大于max_gap，则认为是一个新的时间段
+        # if the interval between the current frame number - previous frame number > max_gap, 
+        # it is considered to be a new time period.
         if frame_numbers[i] - frame_numbers[i-1] > max_gap:
             intervals.append((start_interval, frame_numbers[i-1]))
             start_interval = frame_numbers[i]
-    # 添加最后一个时间段
+    # add last intervals
     intervals.append((start_interval, frame_numbers[-1]))
     
     return intervals
 
 def check_intervals_overlap(intervals1, intervals2):
-    """检查两组时间段列表是否有任何重叠"""
+    #check if overlap
     for start1, end1 in intervals1:
         for start2, end2 in intervals2:
-            # 判断两个区间 [start1, end1] 和 [start2, end2] 是否重叠
+            # check if overlap
             if max(start1, start2) <= min(end1, end2):
                 return True
     return False
 
 def get_min_time_gap(intervals1, intervals2):
-    """计算两组时间段之间的最小间隔"""
+    # Calculate the minimum interval between two intervals
     min_gap = float('inf')
     for start1, end1 in intervals1:
         for start2, end2 in intervals2:
@@ -118,39 +118,37 @@ def calculate_spatiotemporal_score(
     tracks_history,
     merge_log,
     extractor, preprocessor, device):
-    """【核心改进】使用时间段列表计算分数"""
-    # 1. 检查时间重叠
+
+    # 1.check time overlap
     if check_intervals_overlap(intervals1, intervals2):
         return 0.0, "Time Overlap"
 
-    # 2. 计算最小时间间隔和时间因子
+    # get min time gap
     min_gap = get_min_time_gap(intervals1, intervals2)
     
+    # get factor time based on the time gap
     reason_time=''
-    # 【建议的平滑函数】
     if min_gap <= 30:
-        factor_time = 1.25 # 最高奖励
+        factor_time = 1.25 
         reason_time = f"Very Close Gap ({min_gap}f)"
-    elif min_gap <= 300: # 将平滑衰减的窗口拉长
-        # 从 1.15 线性衰减到 0.9
-        # 衰减公式: start_value - (current_gap - window_start) * (total_decay / window_size)
+    elif min_gap <= 300:
         factor_time = 1.15 - (min_gap - 30) * (0.25 / 270)
         reason_time = f"Medium Gap ({min_gap}f)"
-    else: # 间隔非常大 (> 10秒)
-        factor_time = 0.9 # 最大惩罚
+    else: 
+        factor_time = 0.9 
         reason_time = f"Large Gap ({min_gap}f)"
-    # 3. 计算外观相似度
+
+    # 2.1 calculate the global similarities 
     sim_global = min(
         torch.mm(gallery1, gallery2.T).max(dim=1).values.mean().item(),
         torch.mm(gallery1, gallery2.T).max(dim=0).values.mean().item()
     )
 
-    # b) 【核心修正】衔接点相似度 (sim_transition)
-    # 使用新的、严谨的函数来查找衔接帧
-    #path1, path2 = find_closest_transition_frames(roi_dir, track_id1, track_id2, intervals1, intervals2)
     path1, path2, frame1, frame2, min_gap = find_closest_transition_frames(
         roi_dir, track_id1, track_id2, intervals1, intervals2
     )
+
+    # 2.2 calculate the local similarities
     sim_transition = 0.0
     if path1 and path2 and os.path.exists(path1) and os.path.exists(path2):
         img1 = cv2.imread(path1)
@@ -161,10 +159,9 @@ def calculate_spatiotemporal_score(
             if feat1 is not None and feat2 is not None:
                 sim_transition = torch.mm(feat1, feat2.T).item()
     else:
-        # 如果找不到衔接帧（理论上不应发生，除非轨迹为空），则衔接相似度为0
         sim_transition = 0.0
             
-    # 4. 动态加权融合 (保持不变)
+    # calculate weight of global and local appearance based on min gap
     if min_gap <= 45: 
         w_global, w_transition = 0.4, 0.6
     else:
@@ -173,12 +170,12 @@ def calculate_spatiotemporal_score(
     sim_appearance = w_global * sim_global + w_transition * sim_transition
     reason_appearance = f"Global Appearance is {sim_global} Local Appearance is {sim_transition}"
 
-     # --- 3. 空间维度 (Spatial) ---
+     # 3. find spatial vector 
     score_spatial = 0.0
     dist = float('inf')
     bbox1, bbox2 = None, None
     
-    # 从路径中解析出所属的聚类ID
+    # find the cluster id based on the frame path
     cluster_id_for_frame1 = os.path.basename(os.path.dirname(path1))
     cluster_id_for_frame2 = os.path.basename(os.path.dirname(path2))
 
@@ -197,8 +194,7 @@ def calculate_spatiotemporal_score(
         dist = np.linalg.norm(center1 - center2)
         score_spatial = np.exp(-0.003 * dist)
     
-    # --- 4. 最终分数计算 ---
-    # 权重分配：外观占70%，空间占30%
+    # 4. calculate the final marks
     w_appearance = 0.85
     w_spatial = 0.15
     reason_spatial=f"Spatial:  {score_spatial}"
@@ -210,7 +206,7 @@ def calculate_spatiotemporal_score(
     return final_score, reason
 
 def merge_tracks(roi_dir, source_id, dest_id):
-    """将一个轨迹的图片合并到另一个"""
+    # merge tracks
     source_path = os.path.join(roi_dir, source_id)
     dest_path = os.path.join(roi_dir, dest_id)
     print(f"Merging track '{source_id}' into '{dest_id}'...")

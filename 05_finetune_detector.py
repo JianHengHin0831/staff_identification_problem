@@ -4,9 +4,6 @@ import yaml
 import config
 
 def create_yolo_config(dataset_base_path):
-    """
-    自动创建YOLOv8训练所需的data.yaml配置文件。
-    """
     config = {
         'path': os.path.abspath(dataset_base_path),  # 数据集根目录的绝对路径
         'train': os.path.join('images', 'train'),    # train images (相对于 'path')
@@ -23,17 +20,15 @@ def create_yolo_config(dataset_base_path):
     return config_path
  
 def train_detector():
-    """
-    使用合成数据集微调一个YOLOv8n模型来检测员工名牌。
-    """
-    # --- 1. 配置 ---
+    # detect name tag using yolo model
+  
     MODEL_TO_FINETUNE = 'yolov8l.pt' 
     EPOCHS = 50
     IMG_SIZE = 320 
     BATCH_SIZE = 16
     PROJECT_NAME = "staff_tag_detector"
     
-    # --- 2. 准备配置文件 ---
+    # find FINETUNE_DATASET
     if not os.path.exists(config.FINETUNE_DATASET):
         print(f"Error: Dataset directory not found at '{config.FINETUNE_DATASET}'")
         print("Please run the 'generate_finetune_dataset_yolo.py' script first.")
@@ -41,12 +36,11 @@ def train_detector():
         
     config_path = create_yolo_config(config.FINETUNE_DATASET)
     
-    # --- 3. 加载模型并开始训练 ---
+    # load model and start training
     print(f"Loading pre-trained model: {MODEL_TO_FINETUNE}")
     model = YOLO(MODEL_TO_FINETUNE)
     
     print("Starting model fine-tuning...")
-    # 使用 .train() 方法进行训练
     results = model.train(
         data=config_path,
         epochs=EPOCHS,

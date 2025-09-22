@@ -2,14 +2,11 @@
 from torchvision import models, transforms
 import torch
 import cv2
-import json
 import numpy as np
 import os
-from tqdm import tqdm
 
 def get_feature_extractor(device):
-    """加载预训练的ResNet50作为特征提取器"""
-    print("Loading pre-trained ResNet50 model...")
+    print("Loading pre-trained ResNet50 model as feature extractor")
     model = models.resnet50(weights=models.ResNet50_Weights.DEFAULT)
     model.fc = torch.nn.Identity()
     model = model.eval().to(device)
@@ -17,7 +14,7 @@ def get_feature_extractor(device):
     return model
 
 def get_preprocess_transform():
-    """获取图像预处理的变换"""
+    # preprocess the transformation
     return transforms.Compose([
         transforms.ToPILImage(),
         transforms.Resize((224, 224)),
@@ -26,7 +23,7 @@ def get_preprocess_transform():
     ])
 
 def extract_features(extractor, preprocessor, image_bgr, device):
-    """从BGR格式的图像裁剪中提取特征向量"""
+    # extract feature vectors from image crops in BGR format
     if image_bgr is None or image_bgr.size == 0:
         return None
     image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
@@ -35,17 +32,16 @@ def extract_features(extractor, preprocessor, image_bgr, device):
         features = extractor(preprocessed_img)
     return torch.nn.functional.normalize(features, p=2, dim=1)
 
-# --- 1. 辅助函数 ---
 
 def calculate_histogram(image_bgr, bins=[8, 8, 8]):
-    """计算BGR图像的3D颜色直方图并归一化"""
+    # calculate the 3D color histogram of the BGR image and normalize it
     if image_bgr is None or image_bgr.size == 0: return None
     hist = cv2.calcHist([image_bgr], [0, 1, 2], None, bins, [0, 256, 0, 256, 0, 256])
     cv2.normalize(hist, hist, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
     return hist
 
 def build_reference_data(roi_folder, num_templates=10, resize_dim=(64, 128)):
-    """从一个ROI文件夹中创建模板库和平均颜色直方图指纹"""
+    # Create a template library and color histogram blueprint from a ROI folder"
     templates = []
     hists = []
     image_files = []
@@ -75,7 +71,7 @@ def build_reference_data(roi_folder, num_templates=10, resize_dim=(64, 128)):
 
 def find_best_match_in_frame(frame, templates, ref_histogram, prev_bbox, 
                              search_radius=20, match_threshold=0.1, hist_threshold=0.5):
-    """带颜色直方图双重验证的、多尺度的模板匹配"""
+    # multi-scale template matching with color histogram, and double verification
     frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     
     px, py = (prev_bbox[0] + prev_bbox[2]) // 2, (prev_bbox[1] + prev_bbox[3]) // 2
@@ -83,7 +79,6 @@ def find_best_match_in_frame(frame, templates, ref_histogram, prev_bbox,
     x_max = min(frame.shape[1], px + search_radius); y_max = min(frame.shape[0], py + search_radius)
     
     search_area_gray = frame_gray[y_min:y_max, x_min:x_max]
-    # 【KEPT & EXPLAINED】我们保留这个变量，用于后续高效的颜色ROI裁剪
     search_area_color = frame[y_min:y_max, x_min:x_max]
 
     if search_area_gray.size == 0: return None
@@ -104,7 +99,7 @@ def find_best_match_in_frame(frame, templates, ref_histogram, prev_bbox,
             if max_val > match_threshold:
                 top_left_local = max_loc
                 
-                # 【核心修正】现在我们正确地从更小的 `search_area_color` 中裁剪
+                # crop from `search_area_color` 
                 candidate_roi_color = search_area_color[
                     top_left_local[1] : top_left_local[1] + th,
                     top_left_local[0] : top_left_local[0] + tw

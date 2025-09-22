@@ -13,38 +13,37 @@ from boxmot.trackers.bytetrack.bytetrack import ByteTrack
 import config
 
 def run_tracker():
-    # --- 1. 配置 ---
+    # --- 1. config ---
     DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
     YOLO_MODEL_PATH = 'yolov8l.pt'
 
     print(f"Using device: {DEVICE}")
 
-    # --- 2. 初始化模型 ---
+    # --- 2. initialize model ---
     print("Initializing SAHI-wrapped YOLOv8 model for detection...")
     detection_model = AutoDetectionModel.from_pretrained(
         model_type='yolov8',
         model_path=YOLO_MODEL_PATH,
-        confidence_threshold=0.25, # ByteTrack会处理低分框，所以这个值可以设得比较高
+        confidence_threshold=0.25, 
         device=DEVICE,
     )
     
     print("Initializing BYTETracker...")
-    # 初始化ByteTrack追踪器
     tracker = ByteTrack(
-        track_thresh=0.1,     # 过滤掉低于此置信度的检测框（ByteTrack的第一阶段）
-        track_buffer=50,       # 轨迹可以“失踪”的最大帧数
-        match_thresh=0.9,      # IOU匹配阈值
-        frame_rate=30          # 视频帧率
+        track_thresh=0.1,      # filter rate
+        track_buffer=50,       # track buffer that the bytetrack can wait
+        match_thresh=0.9,      # IOU match threshold
+        frame_rate=30          # 30 frame/s
     )
 
-    # --- 3. 准备目录和视频读取器 ---
+    # --- 3. tracker DIR & VIDEO preparation ---
     if os.path.exists(config.TRACKER_ROI_DIR): shutil.rmtree(config.TRACKER_ROI_DIR)
     os.makedirs(config.TRACKER_ROI_DIR)
 
     cap = cv2.VideoCapture(config.VIDEO_PATH)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     
-    # --- 4. 主处理循环 ---
+    # --- 4. main loop ---
     all_tracks_data = {}
     tracker_id_to_folder_id = {}
     
@@ -60,10 +59,10 @@ def run_tracker():
                 overlap_height_ratio=0.2, overlap_width_ratio=0.2
             )
             
-            # 将SAHI结果转换为ByteTrack需要的 (N, 6) numpy数组: [x1, y1, x2, y2, score, class_id]
+            # turn Sahi result to the bytetrack input (N, 6): [x1, y1, x2, y2, score, class_id]
             detections_for_bytetrack = []
             for pred in sahi_result.object_prediction_list:
-                if pred.category.id == 0: # 筛选'person'
+                if pred.category.id == 0: # filter 'person'
                     bbox = pred.bbox
                     x1, y1, x2, y2 = bbox.minx, bbox.miny, bbox.maxx, bbox.maxy
                     confidence = pred.score.value
@@ -74,11 +73,11 @@ def run_tracker():
             else:
                 detections_np = np.empty((0, 6))
 
-            # 更新ByteTrack追踪器, .update()返回一个(M, 7)的numpy数组: [x1, y1, x2, y2, track_id, score, class_id]
+            # update ByteTrack, .update() return (M, 8) numpy list: [x1, y1, x2, y2, track_id, score, class_id]
             online_targets = tracker.update(detections_np, frame)
 
             for target in online_targets:
-                x1, y1, x2, y2, track_id, score, cls, _ = target
+                x1, y1, x2, y2, track_id, _, _, _ = target
                 original_track_id = int(track_id)
                 
                 if original_track_id not in tracker_id_to_folder_id:
@@ -100,7 +99,7 @@ def run_tracker():
 
             pbar.update(1)
 
-    # --- 5. 释放资源和保存结果 ---
+    # --- 5. release resource ---
     cap.release()
     print("\nProcessing finished.")
     
