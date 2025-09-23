@@ -18,7 +18,7 @@ This project presents a comprehensive, multi-stage pipeline for identifying and 
 ├── final_output/           # Contains the final report, annotated video, and JSON data
 ├── helper/                 # Helper modules and utility functions
 ├── output/                 # Intermediate output files from each stage
-├── testing/                # Contains intermidiate video from each stage
+├── testing/                # Contains intermediate video from each stage
 │
 ├── 01_run_tracker.py       # Stage 1: Initial detection and tracking
 ├── 02_run_cluster.py       # Stage 2: Spatio-temporal clustering of tracks
@@ -30,6 +30,7 @@ This project presents a comprehensive, multi-stage pipeline for identifying and 
 ├── 08_final_report.py      # Stage 5: Generation of final report and video
 │
 ├── config.py               # Configuration file for paths and parameters
+├── AI Evaluation doc.pdf   # Documentation for this model
 ├── requirements.txt        # Project dependencies
 └── yolov8l.pt              # Pre-trained YOLOv8 model weights
 ```
