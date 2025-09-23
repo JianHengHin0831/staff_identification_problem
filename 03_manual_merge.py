@@ -66,8 +66,7 @@ def run_apply_manual_merge():
     
     create_annotated_video(
         output_video_path=config.MANUAL_VID,
-        merge_log=merge_log,
-        interpolate=False 
+        merge_log=merge_log
     )
 
 if __name__ == "__main__":

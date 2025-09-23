@@ -126,8 +126,7 @@ def run_clustering():
 
     create_annotated_video(
         output_video_path=config.CLUSTER_VID,
-        merge_log=final_merge_log,
-        interpolate=False 
+        merge_log=final_merge_log
     )
 
 
