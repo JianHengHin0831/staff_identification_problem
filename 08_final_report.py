@@ -1,14 +1,9 @@
-# create_report.py (final version with individual reports per staff)
-
 import json
 import os
-import config # 假设你的config.py里有所有路径
+import config 
 from helper.create_annotated_video import create_annotated_video
 
 def frames_to_intervals(frame_list, max_gap=1):
-    """
-    将一个离散的、排序好的帧号列表转换成连续的时间段。
-    """
     if not frame_list:
         return []
     
@@ -22,10 +17,7 @@ def frames_to_intervals(frame_list, max_gap=1):
     return intervals
 
 def create_report():
-    """
-    生成一个简洁的文本报告，为每个被识别的员工独立回答任务。
-    """
-    # --- 1. 验证和加载数据 ---
+    # validate data
     if not os.path.exists(config.STAFF_ID_PATH):
         print(f"Error: Final staff history file not found at '{config.STAFF_ID_PATH}'")
         return
@@ -33,7 +25,7 @@ def create_report():
     with open(config.STAFF_ID_PATH, 'r') as f:
         staff_data = json.load(f)
 
-    # --- 2. 生成报告内容 ---
+    # generate report content
     
     report_content = "AI Evaluation Task Results\n"
     report_content += "="*28 + "\n\n"
@@ -41,8 +33,6 @@ def create_report():
     if not staff_data:
         report_content += "No staff members were identified in the video clip.\n"
     else:
-        # 【核心修改】遍历每个员工，而不是合并他们
-        
         num_staff = len(staff_data)
         report_content += f"A total of {num_staff} staff member(s) were identified.\n"
         report_content += "Details for each staff member are listed below:\n\n"
@@ -69,7 +59,6 @@ def create_report():
             report_content += "-----------------------------------------\n"
             report_content += "A sample of the center (x, y) coordinates is shown below.\n"
             
-            # 只显示前5帧的坐标作为示例
             for frame_idx in sorted_frames[:5]:
                 bbox = track_data.get(str(frame_idx))
                 if bbox:
@@ -82,7 +71,7 @@ def create_report():
             
             report_content += "\n"
 
-    # --- 3. 引用外部文件和生成视频 ---
+    # generate video and report
     report_content += "--- Additional Information ---\n"
     report_content += f"Complete XY coordinates for all identified staff are located in the JSON file: '{os.path.basename(config.STAFF_ID_PATH)}'\n"
 
@@ -95,7 +84,6 @@ def create_report():
     
     report_content += f"A complete visualization of all identified staff tracks is available in the video file: '{os.path.basename(config.REPORT_VID)}'\n"
 
-    # --- 4. 保存报告 ---
     with open(config.REPORT_TEXT, 'w') as f:
         f.write(report_content)
 

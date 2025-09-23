@@ -1,7 +1,4 @@
-# refine_and_extend_no_ai.py (Cleaned & Corrected Final Version)
-
 import os
-import numpy as np
 from tqdm import tqdm
 import cv2
 import json

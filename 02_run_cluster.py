@@ -34,7 +34,6 @@ def run_clustering():
         galleries[tid] = build_gallery(config.MERGED_ROI_DIR, tid, extractor, preprocessor, DEVICE)
         track_time_intervals[tid] = get_track_time_intervals(config.MERGED_ROI_DIR, tid)
     
-
     # remove unused tracks
     valid_ids = [tid for tid in track_ids if galleries.get(tid) is not None and track_time_intervals.get(tid)]
     galleries = {tid: galleries[tid] for tid in valid_ids}

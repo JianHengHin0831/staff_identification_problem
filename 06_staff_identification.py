@@ -58,7 +58,6 @@ def staff_identification():
             
             try:
                 results = tag_detector(img_path, conf=DETECTION_CONFIDENCE, verbose=False)
-                
                 if len(results[0].boxes) > 0:
                     vote_count += 1
             except Exception as e:
@@ -75,6 +74,7 @@ def staff_identification():
             "total_images": total_images,
             "vote_ratio": f"{vote_ratio:.2%}"
         }
+        
     # print results
     print("\n" + "="*50)
     print("      Final Staff Identification Results (Custom Detector)")

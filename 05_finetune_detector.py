@@ -5,11 +5,11 @@ import config
 
 def create_yolo_config(dataset_base_path):
     config = {
-        'path': os.path.abspath(dataset_base_path),  # 数据集根目录的绝对路径
-        'train': os.path.join('images', 'train'),    # train images (相对于 'path')
-        'val': os.path.join('images', 'train'),      # val images (我们复用训练集做验证)
-        'nc': 1,                                     # 类别数量
-        'names': ['staff_tag']                       # 类别名称列表
+        'path': os.path.abspath(dataset_base_path),  # absolute path for dataset
+        'train': os.path.join('images', 'train'),    # train images
+        'val': os.path.join('images', 'train'),      # val images 
+        'nc': 1,                                     # number of channel/ classifier
+        'names': ['staff_tag']                       # class list
     }
     
     config_path = os.path.join(dataset_base_path, 'data.yaml')
@@ -20,8 +20,7 @@ def create_yolo_config(dataset_base_path):
     return config_path
  
 def train_detector():
-    # detect name tag using yolo model
-  
+    # detect name tag using yolo model  
     MODEL_TO_FINETUNE = 'yolov8l.pt' 
     EPOCHS = 50
     IMG_SIZE = 320 

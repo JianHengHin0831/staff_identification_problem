@@ -37,17 +37,6 @@ def find_closest_transition_frames(roi_dir, track_id1, track_id2, intervals1, in
 
     return path1, path2, best_frame1, best_frame2, min_gap
 
-def get_track_time_range(roi_dir, track_id):
-    # get track time range from starting frame and ending frame
-    track_path = os.path.join(roi_dir, track_id)
-    image_files = [f for f in os.listdir(track_path) if f.endswith('.jpg')]
-    if not image_files:
-        return -1, -1
-    
-    # get the frame numbers from dir name
-    frame_numbers = [int(f.replace('frame_', '').replace('.jpg', '')) for f in image_files]
-    return min(frame_numbers), max(frame_numbers)
-
 def build_gallery(roi_dir, track_id, extractor, preprocessor, device, sample_size=15):
     # build a feature gallery for each track
     gallery_features = []

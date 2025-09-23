@@ -9,7 +9,7 @@ from helper.create_annotated_video import linear_interpolate
 def run_clean_and_interpolate(staff_full_data):
     MAX_JUMP_DISTANCE = 200 # the distance that consider as "sudden position changes"
     MAX_FRAGMENT_LENGTH = 60 # remove the frames if sudden change and the change < MAX_FRAGMENT_LENGTH
-    MAX_INTERPOLATION_GAP = 30 # only do interpolation that lower the 1 second
+    MAX_INTERPOLATION_GAP = 30 # only do interpolation that lower the 1s
 
     # 1. Clean the tracks to remove short segments with sudden position changes.
     cleaned_staff_data = {}

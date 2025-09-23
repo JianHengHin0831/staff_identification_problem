@@ -91,7 +91,8 @@ def run_tracker():
                 if folder_id not in all_tracks_data: all_tracks_data[folder_id] = {}
                 all_tracks_data[folder_id][frame_idx] = bbox
 
-                roi = frame[max(0, bbox[1]):min(frame.shape[0], bbox[3]), max(0, bbox[0]):min(frame.shape[1], bbox[2])]
+                roi = frame[max(0, bbox[1]):min(frame.shape[0], bbox[3]), 
+                            max(0, bbox[0]):min(frame.shape[1], bbox[2])]
                 if roi.size > 0:
                     track_dir = os.path.join(config.TRACKER_ROI_DIR, str(folder_id))
                     os.makedirs(track_dir, exist_ok=True)

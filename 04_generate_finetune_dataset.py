@@ -9,7 +9,6 @@ from tqdm import tqdm
 import config
 
 def augment_and_resize_tag(tag_rgba_image, target_width):
-
     # performs a virtual top-down transformation and augmentation on the RGBA nameplate, 
     # scaling it to the target width.
     # returns a cleaned BGR image and a final alpha mask. 
@@ -43,8 +42,8 @@ def augment_and_resize_tag(tag_rgba_image, target_width):
     cleaned_bgr = cv2.bitwise_and(topview_bgr, topview_bgr, mask=topview_alpha)
     
     # colour augmentation
-    alpha_jitter = np.random.uniform(0.8, 1.2)
-    beta_jitter = np.random.uniform(-20, 20)
+    alpha_jitter = np.random.uniform(0.8, 1.2) #Contrast change
+    beta_jitter = np.random.uniform(-20, 20)  #Brightness change 
     adjusted_bgr = np.clip(alpha_jitter * cleaned_bgr + beta_jitter, 0, 255).astype(np.uint8)
 
     # scaling
