@@ -68,6 +68,7 @@ python 01_run_tracker.py
 
 # Stage 2: Cluster fragmented tracks
 python 02_run_cluster.py
+python 03_manual_merge.py (if needs)
 
 # Stage 3: Generate synthetic data, fine-tune, and identify staff
 python 04_generate_finetune_dataset.py
