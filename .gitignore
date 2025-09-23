@@ -1,4 +1,5 @@
 
 __pycache__/
-output/
-testing/
+output/01_tracker_rois/
+output/02_merge_rois/
+output/03_final_rois

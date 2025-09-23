@@ -1,11 +1,19 @@
+boxmot==15.0.2
+numpy==2.3.3
+opencv_python==4.11.0.86
+PyYAML==6.0.2
+PyYAML==6.0.2
+sahi==0.11.34
+torch==2.8.0+cu129
+torchvision==0.23.0+cu129
+tqdm==4.67.1
+ultralytics==8.3.202
+
 # TensorFlow GPU
 tensorflow-gpu==2.10.0
 
 # TensorBoard
 tensorboard==2.10.1
-
-# Numpy
-numpy<2
 
 # Protobuf 
 protobuf<3.20
@@ -13,9 +21,6 @@ protobuf<3.20
 # Requests
 requests>=2.21.0,<3
 
-# OpenCV
-opencv-python==4.12.0.88
-
-# Ultralytics YOLO
-ultralytics-8.3.202 
+#PIL image
+Pillow>=9.0.0
 
