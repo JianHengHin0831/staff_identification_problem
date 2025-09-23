@@ -102,7 +102,7 @@ After running the complete workflow, the final outputs, including the annotated 
 ## Key Technologies
 
 - **Object Detection:** YOLOv8L, SAHI
-- **Object Tracking:** DeepSort / ByteTrack principles
+- **Object Tracking:** ByteTrack principles
 - **Feature Extraction:** ResNet50 (for clustering)
 - **Fine-tuning:** PyTorch, YOLOv8n
 - **Data Synthesis & Augmentation:** OpenCV, NumPy
