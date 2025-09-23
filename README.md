@@ -59,20 +59,17 @@ This project presents a comprehensive, multi-stage pipeline for identifying and 
     CPU only:
 
     ```bash
-    pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
-    pip install -r requirements.txt
+    pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
     ```
 
     CUDA 12.1: （For other CUDA versions, check PyTorch official installation guide）
 
     ```bash
     pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
-    pip install -r requirements.txt
     ```
 
 3.  Install the remaining dependencies:
     ```bash
-    pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
     pip install -r requirements.txt
     ```
 
