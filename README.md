@@ -55,6 +55,7 @@ This project presents a comprehensive, multi-stage pipeline for identifying and 
     ```
 
 2.  Install PyTorch (choose one depending on your environment):
+
     CPU only:
 
     ```bash
