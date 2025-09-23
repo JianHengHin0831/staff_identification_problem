@@ -1,14 +1,15 @@
 # Staff Identification Problem
+
 This project presents a comprehensive, multi-stage pipeline for identifying and tracking staff members in a top-down video stream. The solution is designed to be robust against common real-world challenges such as small object detection, occlusion, and significant appearance changes, while strictly adhering to a zero data leakage policy for model training.
 
 ## Features
 
--   **Multi-Stage Processing:** A modular pipeline separates the problem into distinct, manageable stages: Tracking, Clustering, Identification, and Refinement.
--   **Robust Tracking:** Utilizes SAHI (Slicing Aided Hyper Inference) with a YOLOv8L detector for superior small object recall, ensuring even distant or partially occluded individuals are tracked.
--   **Intelligent Clustering:** A custom spatio-temporal clustering algorithm merges fragmented tracks based on time, space, and appearance similarity (using ResNet50 embeddings).
--   **Zero Data Leakage Identification:** A lightweight YOLOv8n detector is fine-tuned exclusively on a synthetically generated dataset to recognize staff name tags, ensuring the evaluation on the test video is fair and unbiased.
--   **Track Completion:** A final non-AI backtracking and interpolation step fills in missing frames for identified staff members, creating a more continuous trajectory.
--   **Automated Workflow:** The entire process is orchestrated through a series of numbered Python scripts, ensuring clarity and reproducibility.
+- **Multi-Stage Processing:** A modular pipeline separates the problem into distinct, manageable stages: Tracking, Clustering, Identification, and Refinement.
+- **Robust Tracking:** Utilizes SAHI (Slicing Aided Hyper Inference) with a YOLOv8L detector for superior small object recall, ensuring even distant or partially occluded individuals are tracked.
+- **Intelligent Clustering:** A custom spatio-temporal clustering algorithm merges fragmented tracks based on time, space, and appearance similarity (using ResNet50 embeddings).
+- **Zero Data Leakage Identification:** A lightweight YOLOv8n detector is fine-tuned exclusively on a synthetically generated dataset to recognize staff name tags, ensuring the evaluation on the test video is fair and unbiased.
+- **Track Completion:** A final non-AI backtracking and interpolation step fills in missing frames for identified staff members, creating a more continuous trajectory.
+- **Automated Workflow:** The entire process is orchestrated through a series of numbered Python scripts, ensuring clarity and reproducibility.
 
 ## Project Structure
 
@@ -39,24 +40,40 @@ This project presents a comprehensive, multi-stage pipeline for identifying and 
 
 ### Prerequisites
 
--   Python 3.8+
--   PyTorch
--   OpenCV
--   An NVIDIA GPU is recommended for faster processing.
+- Python 3.9+
+- PyTorch
+- OpenCV
+- An NVIDIA GPU is recommended for faster processing.
 
 ### Installation
 
 1.  Clone the repository:
+
     ```bash
     git clone https://github.com/JianHengHin0831/staff_identification_problem.git
     cd staff_identification_problem
     ```
 
-2.  Install the required dependencies:
+2.  Install PyTorch (choose one depending on your environment):
+    CPU only:
+
     ```bash
+    pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
     pip install -r requirements.txt
     ```
 
+    CUDA 12.1: （For other CUDA versions, check PyTorch official installation guide）
+
+    ```bash
+    pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+    pip install -r requirements.txt
+    ```
+
+3.  Install the remaining dependencies:
+    ```bash
+    pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+    pip install -r requirements.txt
+    ```
 
 ### Execution Workflow
 
@@ -86,8 +103,8 @@ After running the complete workflow, the final outputs, including the annotated 
 
 ## Key Technologies
 
--   **Object Detection:** YOLOv8L, SAHI
--   **Object Tracking:** DeepSort / ByteTrack principles
--   **Feature Extraction:** ResNet50 (for clustering)
--   **Fine-tuning:** PyTorch, YOLOv8n
--   **Data Synthesis & Augmentation:** OpenCV, NumPy
+- **Object Detection:** YOLOv8L, SAHI
+- **Object Tracking:** DeepSort / ByteTrack principles
+- **Feature Extraction:** ResNet50 (for clustering)
+- **Fine-tuning:** PyTorch, YOLOv8n
+- **Data Synthesis & Augmentation:** OpenCV, NumPy
