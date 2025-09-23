@@ -49,7 +49,7 @@ This project presents a comprehensive, multi-stage pipeline for identifying and 
 1.  Clone the repository:
     ```bash
     git clone https://github.com/JianHengHin0831/staff_identification_problem.git
-    cd https://github.com/JianHengHin0831/staff_identification_problem.git
+    cd staff_identification_problem
     ```
 
 2.  Install the required dependencies:
@@ -68,6 +68,7 @@ python 01_run_tracker.py
 
 # Stage 2: Cluster fragmented tracks
 python 02_run_cluster.py
+python 03_manual_merge.py (if needs)
 
 # Stage 3: Generate synthetic data, fine-tune, and identify staff
 python 04_generate_finetune_dataset.py
